@@ -1,9 +1,12 @@
 package com.jayoswal.springboot_exception_handling.controller;
 
 import com.jayoswal.springboot_exception_handling.entity.EmployeeEntity;
+import com.jayoswal.springboot_exception_handling.exception.ControllerException;
+import com.jayoswal.springboot_exception_handling.exception.ServiceException;
 import com.jayoswal.springboot_exception_handling.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,10 +34,17 @@ public class EmployeeController {
     }
 
     @GetMapping("{employeeId}")
-    public ResponseEntity<EmployeeEntity> readEmployee(@PathVariable int employeeId) {
-        EmployeeEntity employee = employeeService.readEmployee(employeeId);
-
-        return new ResponseEntity<>(employee, HttpStatus.CREATED);
+    public ResponseEntity<?> readEmployee(@PathVariable int employeeId) {
+        try {
+            EmployeeEntity employee = employeeService.readEmployee(employeeId);
+            return new ResponseEntity<>(employee, HttpStatus.OK);
+        } catch (ServiceException e) {
+            ControllerException controllerException = new ControllerException(e.getCode(), e.getMessage());
+            return new ResponseEntity<>(controllerException, HttpStatusCode.valueOf(Integer.parseInt(e.getCode())));
+        } catch (Exception e) {
+            ControllerException controllerException = new ControllerException("500", e.getMessage());
+            return new ResponseEntity<>(controllerException, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PutMapping
